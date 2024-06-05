@@ -1,0 +1,121 @@
+package com.example.test9.model;
+
+import com.example.test9.dtos.CompteDto;
+import com.example.test9.dtos.UserDtos;
+import com.example.test9.enums.UserRole;
+import jakarta.persistence.*;
+import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Collection;
+import java.util.List;
+
+@Setter
+
+@Getter
+
+@AllArgsConstructor
+
+@NoArgsConstructor
+
+@ToString
+@Data
+@Entity
+@Table(name = "compte")
+public class Compte implements UserDetails {
+
+
+    /**
+     *
+     */
+    private static final long serialVersionUID = 1L;
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO, generator = "yourGenerator6Name")
+    @SequenceGenerator(name = "yourGenerator6Name", sequenceName = "Compte_seq", allocationSize = 1)
+    private Long idCompte;
+
+    private String email;
+    private String password;
+    private UserRole userRole;
+    private int failedAttempt = 0;
+
+
+    @OneToOne(optional = true)
+    @JoinColumn(name = "inscription_id", referencedColumnName = "idInscription")
+    private User inscription;
+
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority(userRole.name()));
+    }
+
+    @Override
+    public String getUsername() {
+        // TODO Auto-generated method stub
+        return email;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        // TODO Auto-generated method stub
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        // TODO Auto-generated method stub
+        if(userRole==UserRole.Admin|| userRole==UserRole.Responsable){
+            return true;
+        }else return inscription.isNonLocked();
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        // TODO Auto-generated method stub
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        // TODO Auto-generated method stub
+        if(userRole==UserRole.Admin || userRole==UserRole.Responsable){
+            return true;
+        }else return inscription.isEnabled();
+    }
+    public CompteDto getCompte() {
+        CompteDto compte = new CompteDto();
+        compte.setIdCompte(idCompte);
+        compte.setEmail(email);
+
+        if (inscription != null) {
+            UserDtos userDto = new UserDtos();
+            userDto.setIdInscription(inscription.getInscription().getIdInscription());
+            userDto.setEmail(inscription.getInscription().getEmail());
+            userDto.setUserRole(inscription.getInscription().getUserRole());
+            userDto.setVerificationCode(inscription.getInscription().getVerificationCode());
+            userDto.setEnabled(inscription.getInscription().getEnabled());
+            userDto.setNonLocked(inscription.getInscription().isNonLocked());
+            userDto.setDateInscri(inscription.getInscription().getDateInscri());
+            userDto.setContribuable(inscription.getInscription().getContribuable());
+            userDto.setNom(inscription.getInscription().getNom());
+            userDto.setPrenom(inscription.getInscription().getPrenom());
+            userDto.setTypeIdentifiant(inscription.getInscription().getTypeIdentifiant());
+            userDto.setValueIdentifiant(inscription.getInscription().getValueIdentifiant());
+            userDto.setPoste(inscription.getInscription().getPoste());
+            userDto.setPassword(inscription.getPassword());
+            compte.setInscription(userDto);
+        } else {
+
+            compte.setInscription(null);
+        }
+
+        compte.setPassword(password);
+        compte.setUserRole(userRole);
+
+        return compte;
+    }
+
+}
